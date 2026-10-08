@@ -268,3 +268,870 @@
 
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ATCH AI Stock Analysis</title>
+
+    <link rel="stylesheet" href="./style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="header">
+
+        <div class="header-left">
+
+            <div class="logo">
+                ATCH
+            </div>
+
+            <div>
+                <h1>AI Stock Analysis</h1>
+                <p>Artificial Neural Network Prediction Dashboard</p>
+            </div>
+
+        </div>
+
+        <button id="refreshBtn" class="refresh-btn">
+            ↻ 최신 데이터
+        </button>
+
+    </header>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main>
+
+
+        <!-- ================= STOCK HEADER ================= -->
+
+        <section class="stock-header card">
+
+            <div>
+
+                <div class="stock-name">
+                    Atlas Clear Holdings
+                </div>
+
+                <div class="stock-code">
+                    NASDAQ : ATCH
+                </div>
+
+            </div>
+
+
+            <div class="stock-price-area">
+
+                <div id="currentPrice" class="current-price">
+                    -
+                </div>
+
+                <div id="baseDate" class="stock-date">
+                    기준일 -
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= AI SUMMARY ================= -->
+
+        <section class="summary-grid">
+
+
+            <!-- AI PREDICTION -->
+
+            <div class="card prediction-main">
+
+                <div class="card-label">
+                    AI 다음 거래일 예측
+                </div>
+
+                <div id="predictionDirection"
+                     class="prediction-direction">
+                    -
+                </div>
+
+                <div class="prediction-description">
+                    GRU 인공신경망 기반 다음 거래일 수익률 예측
+                </div>
+
+
+                <div class="prediction-values">
+
+                    <div>
+                        <span>예상 수익률</span>
+                        <strong id="predictedReturn">-</strong>
+                    </div>
+
+                    <div>
+                        <span>예상 주가</span>
+                        <strong id="predictedPrice">-</strong>
+                    </div>
+
+                    <div>
+                        <span>예측 강도</span>
+                        <strong id="confidence">-</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- AI SCORE -->
+
+            <div class="card ai-score-card">
+
+                <div class="card-label">
+                    AI 종합 평가
+                </div>
+
+
+                <div class="score-container">
+
+                    <div id="aiScore"
+                         class="ai-score">
+                        -
+                    </div>
+
+                    <div class="score-unit">
+                        / 100
+                    </div>
+
+                </div>
+
+
+                <div id="aiGrade"
+                     class="ai-grade">
+                    분석 중
+                </div>
+
+
+                <div class="score-bar">
+
+                    <div id="scoreBar"
+                         class="score-fill">
+                    </div>
+
+                </div>
+
+
+                <p id="scoreDescription"
+                   class="score-description">
+                    기술적 지표와 AI 예측을 종합하여 계산합니다.
+                </p>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= AI REPORT ================= -->
+
+        <section class="card">
+
+            <div class="section-title">
+                🤖 AI 분석 리포트
+            </div>
+
+            <div id="aiReport"
+                 class="ai-report">
+
+                데이터를 분석하고 있습니다...
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= COMPANY ================= -->
+
+        <section class="card">
+
+            <div class="section-title">
+                🏢 회사 정보
+            </div>
+
+
+            <div class="company-grid">
+
+
+                <div class="company-main">
+
+                    <h3>
+                        Atlas Clear Holdings
+                    </h3>
+
+                    <p>
+                        Atlas Clear Holdings(ATCH)는 금융 및 관련 사업을
+                        기반으로 성장 전략을 추진하는 미국 상장 기업입니다.
+                        본 대시보드는 공개된 시장 데이터를 활용하여
+                        ATCH의 주가 흐름과 시장 상황을 분석하고,
+                        인공신경망 기반의 단기 주가 예측을 제공합니다.
+                    </p>
+
+                    <p>
+                        실제 기업의 사업 내용과 재무 상황은
+                        공식 공시 및 기업 발표 자료를 통해 확인해야 합니다.
+                    </p>
+
+                </div>
+
+
+                <div class="company-info">
+
+                    <div>
+                        <span>종목</span>
+                        <strong>ATCH</strong>
+                    </div>
+
+                    <div>
+                        <span>시장</span>
+                        <strong>NASDAQ</strong>
+                    </div>
+
+                    <div>
+                        <span>분석 방식</span>
+                        <strong>AI / Technical</strong>
+                    </div>
+
+                    <div>
+                        <span>예측 대상</span>
+                        <strong>Next-Day Return</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= SIGNAL ================= -->
+
+        <section class="card">
+
+            <div class="section-title">
+                📊 AI 투자 시그널
+            </div>
+
+
+            <div class="signal-grid">
+
+
+                <div class="signal-box">
+
+                    <div class="signal-icon">
+                        AI
+                    </div>
+
+                    <div>
+
+                        <span>AI 방향성</span>
+
+                        <strong id="signalAI">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="signal-box">
+
+                    <div class="signal-icon">
+                        RSI
+                    </div>
+
+                    <div>
+
+                        <span>RSI 상태</span>
+
+                        <strong id="signalRSI">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="signal-box">
+
+                    <div class="signal-icon">
+                        MA
+                    </div>
+
+                    <div>
+
+                        <span>이동평균 추세</span>
+
+                        <strong id="signalMA">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="signal-box">
+
+                    <div class="signal-icon">
+                        VOL
+                    </div>
+
+                    <div>
+
+                        <span>거래량</span>
+
+                        <strong id="signalVolume">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="signal-notice">
+
+                ※ AI 시그널은 교육 및 분석 목적의 참고 지표이며
+                실제 매수·매도 추천이 아닙니다.
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= PRICE CHART ================= -->
+
+        <section class="card chart-card">
+
+            <div class="section-header">
+
+                <div>
+
+                    <div class="section-title">
+                        📈 ATCH 주가
+                    </div>
+
+                    <div class="section-description">
+                        최근 종가 흐름
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="chart-container">
+
+                <canvas id="priceChart"></canvas>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= BOLLINGER ================= -->
+
+        <section class="card chart-card">
+
+            <div class="section-header">
+
+                <div>
+
+                    <div class="section-title">
+                        📉 Bollinger Bands
+                    </div>
+
+                    <div class="section-description">
+                        가격 변동성과 현재 가격 위치
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="chart-container">
+
+                <canvas id="bollingerChart"></canvas>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= TECHNICAL ================= -->
+
+        <section class="card">
+
+            <div class="section-title">
+                📐 기술적 분석
+            </div>
+
+
+            <div class="indicator-grid">
+
+
+                <div class="indicator">
+
+                    <span>RSI</span>
+
+                    <strong id="rsi">
+                        -
+                    </strong>
+
+                    <small>
+                        상대강도지수
+                    </small>
+
+                </div>
+
+
+                <div class="indicator">
+
+                    <span>MACD</span>
+
+                    <strong id="macd">
+                        -
+                    </strong>
+
+                    <small>
+                        추세 모멘텀
+                    </small>
+
+                </div>
+
+
+                <div class="indicator">
+
+                    <span>Volume</span>
+
+                    <strong id="volume">
+                        -
+                    </strong>
+
+                    <small>
+                        거래량
+                    </small>
+
+                </div>
+
+
+                <div class="indicator">
+
+                    <span>BB Position</span>
+
+                    <strong id="bbPosition">
+                        -
+                    </strong>
+
+                    <small>
+                        볼린저 위치
+                    </small>
+
+                </div>
+
+
+                <div class="indicator">
+
+                    <span>MA20</span>
+
+                    <strong id="ma20">
+                        -
+                    </strong>
+
+                    <small>
+                        20일 이동평균
+                    </small>
+
+                </div>
+
+
+                <div class="indicator">
+
+                    <span>MA50</span>
+
+                    <strong id="ma50">
+                        -
+                    </strong>
+
+                    <small>
+                        50일 이동평균
+                    </small>
+
+                </div>
+
+
+                <div class="indicator">
+
+                    <span>MA200</span>
+
+                    <strong id="ma200">
+                        -
+                    </strong>
+
+                    <small>
+                        200일 이동평균
+                    </small>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= MARKET ================= -->
+
+        <section class="card">
+
+            <div class="section-title">
+                🌎 시장 환경
+            </div>
+
+
+            <div class="market-grid">
+
+
+                <div class="market-item">
+
+                    <span>SPY</span>
+
+                    <strong id="spy">
+                        -
+                    </strong>
+
+                    <small>
+                        S&P 500
+                    </small>
+
+                </div>
+
+
+                <div class="market-item">
+
+                    <span>QQQ</span>
+
+                    <strong id="qqq">
+                        -
+                    </strong>
+
+                    <small>
+                        NASDAQ 100
+                    </small>
+
+                </div>
+
+
+                <div class="market-item">
+
+                    <span>IWM</span>
+
+                    <strong id="iwm">
+                        -
+                    </strong>
+
+                    <small>
+                        Russell 2000
+                    </small>
+
+                </div>
+
+
+                <div class="market-item">
+
+                    <span>VIX</span>
+
+                    <strong id="vix">
+                        -
+                    </strong>
+
+                    <small>
+                        변동성 지수
+                    </small>
+
+                </div>
+
+
+                <div class="market-item">
+
+                    <span>BTC</span>
+
+                    <strong id="btc">
+                        -
+                    </strong>
+
+                    <small>
+                        Bitcoin
+                    </small>
+
+                </div>
+
+
+                <div class="market-item">
+
+                    <span>DXY</span>
+
+                    <strong id="dxy">
+                        -
+                    </strong>
+
+                    <small>
+                        Dollar Index
+                    </small>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= MODEL ================= -->
+
+        <section class="card">
+
+            <div class="section-title">
+                🧠 인공신경망 모델
+            </div>
+
+
+            <div class="model-grid">
+
+
+                <div>
+                    <span>Architecture</span>
+                    <strong>GRU</strong>
+                </div>
+
+
+                <div>
+                    <span>Lookback</span>
+                    <strong>60 Days</strong>
+                </div>
+
+
+                <div>
+                    <span>Features</span>
+                    <strong>68</strong>
+                </div>
+
+
+                <div>
+                    <span>Scaler</span>
+                    <strong>StandardScaler</strong>
+                </div>
+
+            </div>
+
+
+            <div class="algorithm">
+
+                <h3>
+                    예측 알고리즘
+                </h3>
+
+                <div class="algorithm-flow">
+
+                    <div>
+                        시장 데이터
+                    </div>
+
+                    <span>→</span>
+
+                    <div>
+                        데이터 전처리
+                    </div>
+
+                    <span>→</span>
+
+                    <div>
+                        Feature Engineering
+                    </div>
+
+                    <span>→</span>
+
+                    <div>
+                        StandardScaler
+                    </div>
+
+                    <span>→</span>
+
+                    <div>
+                        GRU
+                    </div>
+
+                    <span>→</span>
+
+                    <div>
+                        다음 거래일 수익률
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= PERFORMANCE ================= -->
+
+        <section class="card">
+
+            <div class="section-title">
+                📊 모델 성능
+            </div>
+
+
+            <div class="performance-grid">
+
+
+                <div class="performance">
+
+                    <span>
+                        Validation Accuracy
+                    </span>
+
+                    <strong>
+                        56.39%
+                    </strong>
+
+                </div>
+
+
+                <div class="performance">
+
+                    <span>
+                        Validation F1
+                    </span>
+
+                    <strong>
+                        29.27%
+                    </strong>
+
+                </div>
+
+
+                <div class="performance">
+
+                    <span>
+                        Final Test Accuracy
+                    </span>
+
+                    <strong>
+                        57.46%
+                    </strong>
+
+                </div>
+
+
+                <div class="performance">
+
+                    <span>
+                        Final Test F1
+                    </span>
+
+                    <strong>
+                        0.00%
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="performance-warning">
+
+                현재 모델은 연구 및 교육 목적의 프로토타입입니다.
+                Final Test F1이 낮기 때문에 정확도 하나만으로
+                모델의 실제 투자 성능을 판단해서는 안 됩니다.
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= UPDATE ================= -->
+
+        <section class="card update-card">
+
+            <div>
+
+                <div class="section-title">
+                    🔄 데이터 업데이트
+                </div>
+
+                <p>
+                    현재 웹사이트에 표시되는 데이터는
+                    Colab에서 생성된 JSON 및 CSV 파일을 기반으로 합니다.
+                </p>
+
+            </div>
+
+            <div id="updateStatus">
+                마지막 데이터 확인 중...
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer>
+
+        <strong>
+            ATCH AI Stock Analysis
+        </strong>
+
+        <p>
+            Artificial Neural Network Based Stock Prediction Project
+        </p>
+
+        <p>
+            Educational / Research Purpose Only
+        </p>
+
+    </footer>
+
+</div>
+
+
+<script src="./script.js"></script>
+
+</body>
+</html>
