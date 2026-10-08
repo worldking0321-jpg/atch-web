@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ATCH AI Stock Prediction</title>
+
+    <link rel="stylesheet" href="./style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- HEADER -->
+    <header class="header">
+        <div>
+            <div class="brand">ATCH AI</div>
+            <div class="subtitle">AI Stock Prediction Dashboard</div>
+        </div>
+
+        <button id="refreshBtn" class="refresh-btn">
+            ↻ 최신 데이터
+        </button>
+    </header>
+
+
+    <!-- MAIN -->
+    <main>
+
+        <!-- STOCK SUMMARY -->
+        <section class="summary-grid">
+
+            <div class="card main-price-card">
+                <div class="label">현재 ATCH 주가</div>
+
+                <div id="currentPrice" class="big-price">
+                    -
+                </div>
+
+                <div id="baseDate" class="date">
+                    -
+                </div>
+            </div>
+
+
+            <div class="card prediction-card">
+                <div class="label">AI 다음 거래일 예측</div>
+
+                <div id="predictionDirection" class="prediction-direction">
+                    -
+                </div>
+
+                <div class="prediction-info">
+
+                    <div>
+                        <span>예상 수익률</span>
+                        <strong id="predictedReturn">-</strong>
+                    </div>
+
+                    <div>
+                        <span>예상 주가</span>
+                        <strong id="predictedPrice">-</strong>
+                    </div>
+
+                    <div>
+                        <span>예측 강도</span>
+                        <strong id="confidence">-</strong>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- MODEL INFO -->
+        <section class="card model-card">
+
+            <div class="section-title">
+                AI 모델 정보
+            </div>
+
+            <div class="model-grid">
+
+                <div>
+                    <span>모델</span>
+                    <strong>GRU</strong>
+                </div>
+
+                <div>
+                    <span>Lookback</span>
+                    <strong>60일</strong>
+                </div>
+
+                <div>
+                    <span>Scaler</span>
+                    <strong>StandardScaler</strong>
+                </div>
+
+                <div>
+                    <span>Feature</span>
+                    <strong>68개</strong>
+                </div>
+
+            </div>
+
+            <div class="notice">
+                ※ 본 결과는 인공신경망 기반의 예측값이며 실제 주가를 보장하지 않습니다.
+            </div>
+
+        </section>
+
+
+        <!-- PRICE CHART -->
+        <section class="card chart-card">
+
+            <div class="section-header">
+                <div>
+                    <div class="section-title">
+                        ATCH 주가 차트
+                    </div>
+
+                    <div class="section-description">
+                        최근 주가 흐름
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
+
+        </section>
+
+
+        <!-- BOLLINGER BAND -->
+        <section class="card chart-card">
+
+            <div class="section-header">
+                <div>
+                    <div class="section-title">
+                        Bollinger Bands
+                    </div>
+
+                    <div class="section-description">
+                        이동평균과 변동성 기반 기술적 지표
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="bollingerChart"></canvas>
+            </div>
+
+        </section>
+
+
+        <!-- TECHNICAL INDICATORS -->
+        <section class="card">
+
+            <div class="section-title">
+                주요 기술적 지표
+            </div>
+
+            <div class="indicator-grid">
+
+                <div class="indicator">
+                    <span>RSI</span>
+                    <strong id="rsi">-</strong>
+                </div>
+
+                <div class="indicator">
+                    <span>MACD</span>
+                    <strong id="macd">-</strong>
+                </div>
+
+                <div class="indicator">
+                    <span>Volume</span>
+                    <strong id="volume">-</strong>
+                </div>
+
+                <div class="indicator">
+                    <span>BB Position</span>
+                    <strong id="bbPosition">-</strong>
+                </div>
+
+                <div class="indicator">
+                    <span>MA20</span>
+                    <strong id="ma20">-</strong>
+                </div>
+
+                <div class="indicator">
+                    <span>MA50</span>
+                    <strong id="ma50">-</strong>
+                </div>
+
+                <div class="indicator">
+                    <span>MA200</span>
+                    <strong id="ma200">-</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- MODEL PERFORMANCE -->
+        <section class="card">
+
+            <div class="section-title">
+                모델 성능
+            </div>
+
+            <div class="performance-grid">
+
+                <div class="performance">
+                    <span>Validation Accuracy</span>
+                    <strong>56.39%</strong>
+                </div>
+
+                <div class="performance">
+                    <span>Validation F1</span>
+                    <strong>29.27%</strong>
+                </div>
+
+                <div class="performance">
+                    <span>Final Test Accuracy</span>
+                    <strong>57.46%</strong>
+                </div>
+
+                <div class="performance">
+                    <span>Final Test F1</span>
+                    <strong>0.00%</strong>
+                </div>
+
+            </div>
+
+            <p class="performance-note">
+                정확도만으로 모델의 투자 성능을 판단하기 어렵기 때문에
+                Accuracy, F1, R² 등을 함께 확인해야 합니다.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer>
+        <p>
+            ATCH AI Stock Prediction Dashboard
+        </p>
+
+        <p>
+            Educational / Research Purpose Only
+        </p>
+    </footer>
+
+</div>
+
+
+<script src="./script.js"></script>
+
+</body>
+</html>
