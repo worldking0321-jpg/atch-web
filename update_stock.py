@@ -39,7 +39,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 
 # =========================================================
-# LOAD MODEL FILES
+# MODEL FILE PATHS
 # =========================================================
 
 MODEL_PATH = os.path.join(
@@ -73,14 +73,22 @@ print("ATCH AI STOCK AUTO UPDATE")
 print("==========================================")
 
 
+# =========================================================
+# LOAD MODEL
+# =========================================================
+
 print("\n[1] Loading model...")
 
 
-model = load_model(MODEL_PATH)
+model = load_model(
+    MODEL_PATH
+)
+
 
 feature_scaler = joblib.load(
     FEATURE_SCALER_PATH
 )
+
 
 target_scaler = joblib.load(
     TARGET_SCALER_PATH
@@ -96,24 +104,44 @@ with open(
     feature_columns = json.load(f)
 
 
-if isinstance(feature_columns, dict):
+# feature_columns.json이
+# {"feature_columns": [...]} 형태일 경우 대응
+
+if isinstance(
+    feature_columns,
+    dict
+):
 
     if "feature_columns" in feature_columns:
-        feature_columns = feature_columns["feature_columns"]
+
+        feature_columns = (
+            feature_columns["feature_columns"]
+        )
 
     elif "features" in feature_columns:
-        feature_columns = feature_columns["features"]
+
+        feature_columns = (
+            feature_columns["features"]
+        )
 
 
-print("Model loaded.")
-print("Feature count:", len(feature_columns))
+print(
+    "Model loaded."
+)
+
+print(
+    "Feature count:",
+    len(feature_columns)
+)
 
 
 # =========================================================
-# DOWNLOAD DATA
+# DOWNLOAD YAHOO FINANCE DATA
 # =========================================================
 
-print("\n[2] Downloading Yahoo Finance data...")
+print(
+    "\n[2] Downloading Yahoo Finance data..."
+)
 
 
 downloaded = {}
@@ -121,7 +149,11 @@ downloaded = {}
 
 for name, ticker in TICKERS.items():
 
-    print("Downloading:", name, ticker)
+    print(
+        "Downloading:",
+        name,
+        ticker
+    )
 
     df = yf.download(
         ticker,
@@ -130,6 +162,7 @@ for name, ticker in TICKERS.items():
         auto_adjust=False,
         progress=False
     )
+
 
     if df is None or df.empty:
 
@@ -142,26 +175,49 @@ for name, ticker in TICKERS.items():
         continue
 
 
-    if isinstance(df.columns, pd.MultiIndex):
+    # yfinance 최신 버전에서
+    # MultiIndex가 생기는 경우 처리
 
-        try:
-            df.columns = df.columns.get_level_values(0)
+    if isinstance(
+        df.columns,
+        pd.MultiIndex
+    ):
 
-        except Exception:
-            pass
+        df.columns = (
+            df.columns
+            .get_level_values(0)
+        )
 
 
     df = df.copy()
 
+
+    # timezone 제거
+
     df.index = pd.to_datetime(
         df.index
-    ).tz_localize(None)
+    )
+
+
+    try:
+
+        df.index = (
+            df.index
+            .tz_localize(None)
+        )
+
+    except:
+
+        pass
 
 
     downloaded[name] = df
 
 
-print("\nDownloaded datasets:")
+print(
+    "\nDownloaded datasets:"
+)
+
 
 for key, df in downloaded.items():
 
@@ -177,7 +233,9 @@ for key, df in downloaded.items():
 # ATCH MASTER INDEX
 # =========================================================
 
-print("\n[3] Creating ATCH trading-day master index...")
+print(
+    "\n[3] Creating ATCH trading-day master index..."
+)
 
 
 if "ATCH" not in downloaded:
@@ -189,17 +247,20 @@ if "ATCH" not in downloaded:
 
 atch = downloaded["ATCH"].copy()
 
+
+# ATCH 실제 거래일만 사용
+
 master_index = atch.index
 
-
-# =========================================================
-# BASIC DATAFRAME
-# =========================================================
 
 data = pd.DataFrame(
     index=master_index
 )
 
+
+# =========================================================
+# ADD SERIES FUNCTION
+# =========================================================
 
 def add_series(
     dataframe,
@@ -209,31 +270,48 @@ def add_series(
 ):
 
     if source not in downloaded:
+
         return
+
 
     df = downloaded[source]
 
+
     if column not in df.columns:
+
         return
 
+
     series = df[column]
+
+
+    # ATCH 거래일에 맞춰 정렬
 
     series = series.reindex(
         dataframe.index
     )
 
+
+    # 시장 데이터가 빠진 날은
+    # 이전 거래일 값 사용
+
     series = series.ffill()
+
 
     dataframe[new_name] = series
 
 
-# ATCH
+# =========================================================
+# ATCH DATA
+# =========================================================
+
 add_series(
     data,
     "ATCH",
     "Close",
     "Close"
 )
+
 
 add_series(
     data,
@@ -243,13 +321,17 @@ add_series(
 )
 
 
-# Market data
+# =========================================================
+# MARKET DATA
+# =========================================================
+
 add_series(
     data,
     "SPY",
     "Close",
     "SPY_Close"
 )
+
 
 add_series(
     data,
@@ -258,12 +340,14 @@ add_series(
     "QQQ_Close"
 )
 
+
 add_series(
     data,
     "IWM",
     "Close",
     "IWM_Close"
 )
+
 
 add_series(
     data,
@@ -272,6 +356,7 @@ add_series(
     "VIX"
 )
 
+
 add_series(
     data,
     "TNX",
@@ -279,12 +364,14 @@ add_series(
     "TNX"
 )
 
+
 add_series(
     data,
     "DXY",
     "Close",
     "DXY"
 )
+
 
 add_series(
     data,
@@ -298,38 +385,9 @@ add_series(
 # FEATURE ENGINEERING
 # =========================================================
 
-print("\n[4] Creating features...")
-
-
-def pct_return(series, period=1):
-
-    return series.pct_change(period)
-
-
-def rsi(series, period=14):
-
-    delta = series.diff()
-
-    gain = delta.clip(lower=0)
-
-    loss = -delta.clip(upper=0)
-
-    avg_gain = gain.rolling(
-        period
-    ).mean()
-
-    avg_loss = loss.rolling(
-        period
-    ).mean()
-
-    rs = avg_gain / avg_loss.replace(
-        0,
-        np.nan
-    )
-
-    return 100 - (
-        100 / (1 + rs)
-    )
+print(
+    "\n[4] Creating features..."
+)
 
 
 close = data["Close"]
@@ -337,134 +395,260 @@ close = data["Close"]
 volume = data["Volume"]
 
 
-# ---------------------------------------------------------
-# Returns
-# ---------------------------------------------------------
+# =========================================================
+# RETURN 1 / 2 / 3 / 5 / 10 / 20
+# =========================================================
 
-for p in [1, 2, 3, 5, 10, 20]:
+for p in [
+    1,
+    2,
+    3,
+    5,
+    10,
+    20
+]:
 
-    data[f"Return_{p}"] = pct_return(
-        close,
-        p
+    data[
+        f"Return_{p}"
+    ] = (
+        close.pct_change(p)
     )
 
 
-# ---------------------------------------------------------
-# Volume changes
-# ---------------------------------------------------------
+# =========================================================
+# VOLUME CHANGE
+# =========================================================
 
-for p in [1, 3, 5, 10, 20]:
+for p in [
+    1,
+    3,
+    5,
+    10,
+    20
+]:
 
-    data[f"Volume_Change_{p}"] = (
+    data[
+        f"Volume_Change_{p}"
+    ] = (
         volume.pct_change(p)
     )
 
 
-# ---------------------------------------------------------
-# Moving averages
-# ---------------------------------------------------------
+# =========================================================
+# MOVING AVERAGE
+# =========================================================
 
-for p in [5, 10, 20, 50, 100, 200]:
+for p in [
+    5,
+    10,
+    20,
+    50,
+    100,
+    200
+]:
 
-    ma = close.rolling(p).mean()
+    ma = close.rolling(
+        p
+    ).mean()
 
-    data[f"MA_{p}"] = ma
 
-    data[f"Price_MA_{p}"] = (
+    data[
+        f"MA_{p}"
+    ] = ma
+
+
+    data[
+        f"Price_MA_{p}"
+    ] = (
         close / ma - 1
     )
 
 
-# ---------------------------------------------------------
+# =========================================================
 # EMA
-# ---------------------------------------------------------
+# =========================================================
 
-for p in [5, 10, 20, 50]:
+for p in [
+    5,
+    10,
+    20,
+    50
+]:
 
     ema = close.ewm(
         span=p,
         adjust=False
     ).mean()
 
-    data[f"EMA_{p}"] = ema
 
-    data[f"Price_EMA_{p}"] = (
+    data[
+        f"EMA_{p}"
+    ] = ema
+
+
+    data[
+        f"Price_EMA_{p}"
+    ] = (
         close / ema - 1
     )
 
 
-# ---------------------------------------------------------
+# =========================================================
 # RSI
-# ---------------------------------------------------------
+# =========================================================
 
-data["RSI"] = rsi(
+def calculate_rsi(
+    series,
+    period=14
+):
+
+    delta = series.diff()
+
+
+    gain = delta.clip(
+        lower=0
+    )
+
+
+    loss = -delta.clip(
+        upper=0
+    )
+
+
+    avg_gain = (
+        gain
+        .rolling(period)
+        .mean()
+    )
+
+
+    avg_loss = (
+        loss
+        .rolling(period)
+        .mean()
+    )
+
+
+    rs = (
+        avg_gain /
+        avg_loss.replace(
+            0,
+            np.nan
+        )
+    )
+
+
+    return (
+        100 -
+        (
+            100 /
+            (1 + rs)
+        )
+    )
+
+
+data["RSI"] = calculate_rsi(
     close,
     14
 )
 
 
-# ---------------------------------------------------------
+# =========================================================
 # MACD
-# ---------------------------------------------------------
+# =========================================================
 
 ema12 = close.ewm(
     span=12,
     adjust=False
 ).mean()
 
+
 ema26 = close.ewm(
     span=26,
     adjust=False
 ).mean()
 
-macd = ema12 - ema26
 
-macd_signal = macd.ewm(
-    span=9,
-    adjust=False
-).mean()
-
-data["MACD"] = macd
-
-data["MACD_Signal"] = macd_signal
-
-data["MACD_Hist"] = (
-    macd - macd_signal
+macd = (
+    ema12 -
+    ema26
 )
 
 
-# ---------------------------------------------------------
-# Bollinger Bands
-# ---------------------------------------------------------
+macd_signal = (
+    macd
+    .ewm(
+        span=9,
+        adjust=False
+    )
+    .mean()
+)
 
-bb_middle = close.rolling(
-    20
-).mean()
 
-bb_std = close.rolling(
-    20
-).std()
+data["MACD"] = macd
+
+
+data["MACD_Signal"] = (
+    macd_signal
+)
+
+
+data["MACD_Hist"] = (
+    macd -
+    macd_signal
+)
+
+
+# =========================================================
+# BOLLINGER BANDS
+# =========================================================
+
+bb_middle = (
+    close
+    .rolling(20)
+    .mean()
+)
+
+
+bb_std = (
+    close
+    .rolling(20)
+    .std()
+)
+
 
 bb_upper = (
     bb_middle +
     2 * bb_std
 )
 
+
 bb_lower = (
     bb_middle -
     2 * bb_std
 )
 
-data["BB_Middle"] = bb_middle
 
-data["BB_Upper"] = bb_upper
+data["BB_Middle"] = (
+    bb_middle
+)
 
-data["BB_Lower"] = bb_lower
+
+data["BB_Upper"] = (
+    bb_upper
+)
+
+
+data["BB_Lower"] = (
+    bb_lower
+)
+
 
 data["BB_Width"] = (
     (bb_upper - bb_lower)
     / bb_middle
 )
+
 
 data["BB_Position"] = (
     (close - bb_lower)
@@ -473,135 +657,181 @@ data["BB_Position"] = (
 )
 
 
-# ---------------------------------------------------------
-# Volatility
-# ---------------------------------------------------------
+# =========================================================
+# VOLATILITY
+# =========================================================
 
-for p in [5, 10, 20, 30, 60]:
+for p in [
+    5,
+    10,
+    20,
+    30,
+    60
+]:
 
-    data[f"Volatility_{p}"] = (
+    data[
+        f"Volatility_{p}"
+    ] = (
         data["Return_1"]
         .rolling(p)
         .std()
     )
 
 
-# ---------------------------------------------------------
-# ATCH / Market ratios
-# ---------------------------------------------------------
+# =========================================================
+# ATCH / MARKET RATIO
+# =========================================================
 
-if "SPY_Close" in data:
+data[
+    "ATCH_SPY_Ratio"
+] = (
+    close /
+    data["SPY_Close"]
+)
 
-    data["ATCH_SPY_Ratio"] = (
-        close / data["SPY_Close"]
+
+data[
+    "ATCH_QQQ_Ratio"
+] = (
+    close /
+    data["QQQ_Close"]
+)
+
+
+data[
+    "ATCH_IWM_Ratio"
+] = (
+    close /
+    data["IWM_Close"]
+)
+
+
+# =========================================================
+# MARKET RETURNS
+#
+# IMPORTANT:
+# 모델에서 실제 사용한 feature 이름
+# SPY_Return_1
+# SPY_Return_3
+# SPY_Return_5
+# 등을 그대로 생성
+# =========================================================
+
+for p in [
+    1,
+    3,
+    5
+]:
+
+    data[
+        f"SPY_Return_{p}"
+    ] = (
+        data["SPY_Close"]
+        .pct_change(p)
     )
 
 
-if "QQQ_Close" in data:
-
-    data["ATCH_QQQ_Ratio"] = (
-        close / data["QQQ_Close"]
+    data[
+        f"QQQ_Return_{p}"
+    ] = (
+        data["QQQ_Close"]
+        .pct_change(p)
     )
 
 
-if "IWM_Close" in data:
-
-    data["ATCH_IWM_Ratio"] = (
-        close / data["IWM_Close"]
+    data[
+        f"IWM_Return_{p}"
+    ] = (
+        data["IWM_Close"]
+        .pct_change(p)
     )
 
 
-# ---------------------------------------------------------
-# Market returns
-# ---------------------------------------------------------
-
-if "SPY_Close" in data:
-
-    data["SPY_Return"] = (
-        data["SPY_Close"].pct_change()
+    data[
+        f"BTC_Return_{p}"
+    ] = (
+        data["BTC_Close"]
+        .pct_change(p)
     )
 
 
-if "QQQ_Close" in data:
+# =========================================================
+# MACRO CHANGES
+# =========================================================
 
-    data["QQQ_Return"] = (
-        data["QQQ_Close"].pct_change()
-    )
-
-
-if "IWM_Close" in data:
-
-    data["IWM_Return"] = (
-        data["IWM_Close"].pct_change()
-    )
+data[
+    "VIX_Change"
+] = (
+    data["VIX"]
+    .pct_change()
+)
 
 
-if "BTC_Close" in data:
-
-    data["BTC_Return"] = (
-        data["BTC_Close"].pct_change()
-    )
-
-
-# ---------------------------------------------------------
-# Macro changes
-# ---------------------------------------------------------
-
-if "VIX" in data:
-
-    data["VIX_Change"] = (
-        data["VIX"].pct_change()
-    )
+data[
+    "TNX_Change"
+] = (
+    data["TNX"]
+    .pct_change()
+)
 
 
-if "TNX" in data:
-
-    data["TNX_Change"] = (
-        data["TNX"].pct_change()
-    )
-
-
-if "DXY" in data:
-
-    data["DXY_Change"] = (
-        data["DXY"].pct_change()
-    )
+data[
+    "DXY_Change"
+] = (
+    data["DXY"]
+    .pct_change()
+)
 
 
-# ---------------------------------------------------------
-# Relative returns
-# ---------------------------------------------------------
+# =========================================================
+# RELATIVE RETURNS
+#
+# IMPORTANT:
+# 실제 feature 이름에 맞춤
+# =========================================================
 
-if "SPY_Return" in data:
-
-    data["Relative_Return_SPY"] = (
-        data["Return_1"]
-        - data["SPY_Return"]
-    )
-
-
-if "QQQ_Return" in data:
-
-    data["Relative_Return_QQQ"] = (
-        data["Return_1"]
-        - data["QQQ_Return"]
-    )
+data[
+    "Relative_SPY_Return"
+] = (
+    data["Return_1"]
+    -
+    data["SPY_Return_1"]
+)
 
 
-if "IWM_Return" in data:
+data[
+    "Relative_QQQ_Return"
+] = (
+    data["Return_1"]
+    -
+    data["QQQ_Return_1"]
+)
 
-    data["Relative_Return_IWM"] = (
-        data["Return_1"]
-        - data["IWM_Return"]
-    )
+
+data[
+    "Relative_IWM_Return"
+] = (
+    data["Return_1"]
+    -
+    data["IWM_Return_1"]
+)
 
 
 # =========================================================
 # TARGET
+#
+# 최신 데이터는 다음날 데이터가 없으므로
+# 실제 예측에서는 Target을 사용하지 않음
 # =========================================================
 
-data["Target_Return"] = (
-    close.shift(-1) / close - 1
+data[
+    "Target_Return"
+] = (
+    close.shift(-1)
+    /
+    close
+    -
+    1
 )
 
 
@@ -609,125 +839,189 @@ data["Target_Return"] = (
 # CLEAN DATA
 # =========================================================
 
-print("\n[5] Cleaning data...")
+print(
+    "\n[5] Cleaning data..."
+)
 
 
-feature_data = data.copy()
-
-
-feature_data = feature_data.replace(
-    [np.inf, -np.inf],
+data = data.replace(
+    [
+        np.inf,
+        -np.inf
+    ],
     np.nan
 )
 
 
-feature_data = feature_data.ffill()
+# 시장 데이터의 빈 부분 보완
 
-
-feature_data = feature_data.dropna(
-    subset=feature_columns
-)
-
-
-print(
-    "Feature dataframe:",
-    feature_data.shape
-)
+data = data.ffill()
 
 
 # =========================================================
-# CHECK FEATURES
+# FEATURE CHECK
 # =========================================================
 
 missing_features = [
     col
     for col in feature_columns
-    if col not in feature_data.columns
+    if col not in data.columns
 ]
 
 
 if missing_features:
 
     print(
-        "\nMissing features:"
+        "\n=========================================="
     )
 
+    print(
+        "ERROR: Missing model features"
+    )
+
+    print(
+        "=========================================="
+    )
+
+
     for col in missing_features:
+
         print(
             " -",
             col
         )
+
 
     raise RuntimeError(
         "Required model features are missing."
     )
 
 
+print(
+    "All model features found."
+)
+
+
 # =========================================================
-# LATEST 60 DAYS
+# REMOVE ROWS WITH MISSING FEATURES
+# =========================================================
+
+feature_data = data.dropna(
+    subset=feature_columns
+)
+
+
+print(
+    "Final feature data:",
+    feature_data.shape
+)
+
+
+print(
+    "Feature count:",
+    len(feature_columns)
+)
+
+
+# =========================================================
+# CHECK LOOKBACK
 # =========================================================
 
 if len(feature_data) < LOOKBACK:
 
     raise RuntimeError(
-        "Not enough data for 60-day prediction."
+        "Not enough data for "
+        "60-day prediction."
     )
 
 
-latest_features = feature_data[
-    feature_columns
-].tail(LOOKBACK)
+# =========================================================
+# LAST 60 DAYS
+# =========================================================
+
+latest_features = (
+    feature_data[
+        feature_columns
+    ]
+    .tail(LOOKBACK)
+)
 
 
 # =========================================================
 # SCALE
 # =========================================================
 
-print("\n[6] Scaling input...")
-
-
-X = latest_features.values.astype(
-    np.float32
+print(
+    "\n[6] Scaling input..."
 )
 
 
-X_scaled = feature_scaler.transform(
-    X
+X = (
+    latest_features
+    .values
+    .astype(
+        np.float32
+    )
 )
 
 
-X_scaled = X_scaled.reshape(
-    1,
-    LOOKBACK,
-    len(feature_columns)
+X_scaled = (
+    feature_scaler
+    .transform(X)
+)
+
+
+X_scaled = (
+    X_scaled
+    .reshape(
+        1,
+        LOOKBACK,
+        len(feature_columns)
+    )
 )
 
 
 # =========================================================
-# MODEL PREDICTION
+# GRU PREDICTION
 # =========================================================
 
-print("\n[7] Running GRU prediction...")
-
-
-prediction_scaled = model.predict(
-    X_scaled,
-    verbose=0
+print(
+    "\n[7] Running GRU prediction..."
 )
 
+
+prediction_scaled = (
+    model.predict(
+        X_scaled,
+        verbose=0
+    )
+)
+
+
+# =========================================================
+# INVERSE SCALE
+# =========================================================
 
 predicted_return = (
-    target_scaler.inverse_transform(
+    target_scaler
+    .inverse_transform(
         prediction_scaled
     )[0][0]
 )
 
 
+predicted_return = float(
+    predicted_return
+)
+
+
 # =========================================================
-# LATEST PRICE
+# CURRENT PRICE
 # =========================================================
 
-latest_row = feature_data.iloc[-1]
+latest_row = (
+    feature_data.iloc[-1]
+)
 
 
 current_price = float(
@@ -735,11 +1029,22 @@ current_price = float(
 )
 
 
+# =========================================================
+# PREDICTED PRICE
+# =========================================================
+
 predicted_price = (
     current_price *
-    (1 + predicted_return)
+    (
+        1 +
+        predicted_return
+    )
 )
 
+
+# =========================================================
+# DIRECTION
+# =========================================================
 
 if predicted_return > 0.005:
 
@@ -754,20 +1059,29 @@ else:
     direction = "보합 예상"
 
 
+# =========================================================
+# PREDICTION STRENGTH
+#
+# 주의:
+# 실제 확률이 아니라
+# 예측 수익률의 절대값을 이용한
+# 화면 표시용 강도
+# =========================================================
+
 prediction_strength = min(
     abs(predicted_return) / 0.05,
     1
+) * 100
+
+
+# =========================================================
+# LATEST DATE
+# =========================================================
+
+latest_date = (
+    feature_data.index[-1]
 )
 
-
-prediction_strength *= 100
-
-
-# =========================================================
-# DATES
-# =========================================================
-
-latest_date = feature_data.index[-1]
 
 latest_date_string = (
     latest_date.strftime(
@@ -777,17 +1091,16 @@ latest_date_string = (
 
 
 # =========================================================
-# SAVE PREDICTION JSON
+# PREDICTION JSON
 # =========================================================
-
-print("\n[8] Saving prediction...")
-
 
 prediction_data = {
 
-    "ticker": TICKER,
+    "ticker":
+        TICKER,
 
-    "company": "Atlas Clear Holdings",
+    "company":
+        "Atlas Clear Holdings",
 
     "reference_date":
         latest_date_string,
@@ -803,13 +1116,13 @@ prediction_data = {
 
     "predicted_return":
         round(
-            float(predicted_return),
+            predicted_return,
             8
         ),
 
     "predicted_price":
         round(
-            float(predicted_price),
+            predicted_price,
             6
         ),
 
@@ -818,7 +1131,7 @@ prediction_data = {
 
     "prediction_strength":
         round(
-            float(prediction_strength),
+            prediction_strength,
             2
         ),
 
@@ -838,15 +1151,21 @@ prediction_data = {
         datetime.now(
             timezone.utc
         ).isoformat()
-
 }
 
 
+# =========================================================
+# SAVE JSON
+# =========================================================
+
+prediction_path = os.path.join(
+    DATA_DIR,
+    "latest_prediction.json"
+)
+
+
 with open(
-    os.path.join(
-        DATA_DIR,
-        "latest_prediction.json"
-    ),
+    prediction_path,
     "w",
     encoding="utf-8"
 ) as f:
@@ -860,16 +1179,22 @@ with open(
 
 
 # =========================================================
-# SAVE LATEST DATA
+# SAVE LATEST DATA CSV
 # =========================================================
 
-print("\n[9] Saving latest_data.csv...")
+print(
+    "\n[8] Saving latest_data.csv..."
+)
 
 
-# 최근 250개만 웹사이트에서 사용
-latest_output = feature_data.tail(
-    250
-).copy()
+# 최근 250 거래일만 저장
+# 웹사이트 차트에 충분
+
+latest_output = (
+    feature_data
+    .tail(250)
+    .copy()
+)
 
 
 latest_output.insert(
@@ -894,6 +1219,11 @@ latest_output.to_csv(
 # PREDICTION HISTORY
 # =========================================================
 
+print(
+    "\n[9] Updating prediction history..."
+)
+
+
 history_path = os.path.join(
     DATA_DIR,
     "prediction_history.csv"
@@ -901,36 +1231,43 @@ history_path = os.path.join(
 
 
 new_history = pd.DataFrame(
-    [{
-        "reference_date":
-            latest_date_string,
+    [
+        {
 
-        "current_price":
-            current_price,
+            "reference_date":
+                latest_date_string,
 
-        "predicted_return":
-            predicted_return,
+            "current_price":
+                current_price,
 
-        "predicted_price":
-            predicted_price,
+            "predicted_return":
+                predicted_return,
 
-        "direction":
-            direction,
+            "predicted_price":
+                predicted_price,
 
-        "prediction_strength":
-            prediction_strength,
+            "direction":
+                direction,
 
-        "model":
-            "GRU"
-    }]
+            "prediction_strength":
+                prediction_strength,
+
+            "model":
+                "GRU"
+
+        }
+    ]
 )
 
 
-if os.path.exists(history_path):
+if os.path.exists(
+    history_path
+):
 
     history = pd.read_csv(
         history_path
     )
+
 
     history = pd.concat(
         [
@@ -940,19 +1277,30 @@ if os.path.exists(history_path):
         ignore_index=True
     )
 
+
 else:
 
     history = new_history
 
 
-history = history.drop_duplicates(
-    subset=["reference_date"],
-    keep="last"
+# 같은 날짜가 여러 번 들어가는 것 방지
+
+history = (
+    history
+    .drop_duplicates(
+        subset=[
+            "reference_date"
+        ],
+        keep="last"
+    )
 )
 
 
-history = history.sort_values(
-    "reference_date"
+history = (
+    history
+    .sort_values(
+        "reference_date"
+    )
 )
 
 
@@ -963,12 +1311,20 @@ history.to_csv(
 
 
 # =========================================================
-# SUMMARY
+# FINAL OUTPUT
 # =========================================================
 
-print("\n==========================================")
-print("UPDATE COMPLETE")
-print("==========================================")
+print(
+    "\n=========================================="
+)
+
+print(
+    "UPDATE COMPLETE"
+)
+
+print(
+    "=========================================="
+)
 
 print(
     "Reference date:",
@@ -1001,9 +1357,10 @@ print(
 )
 
 print(
-    "Features:",
+    "Feature count:",
     len(feature_columns)
 )
 
 print(
-    "==========================================")
+    "=========================================="
+)
