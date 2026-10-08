@@ -1,0 +1,17 @@
+{
+  "ticker": "ATCH",
+  "date": "2026-10-06",
+  "current_price": 0.182,
+  "predicted_return": -0.019461,
+  "predicted_return_percent": -1.9461,
+  "predicted_price": 0.178458,
+  "direction": "하락",
+  "confidence": 38.92,
+  "model": "GRU",
+  "lookback": 60,
+  "validation_accuracy": 0.5639,
+  "validation_f1": 0.2927,
+  "test_accuracy": 0.5746,
+  "test_f1": 0.0,
+  "updated_at": "2026-10-08T10:15:41.593091"
+}
