@@ -1,100 +1,46 @@
 name: ATCH Stock AI Auto Update
 
 on:
-
-  # 매일 실행
   schedule:
-
-    # UTC 22:30
-    # 한국시간 오전 7:30
     - cron: "30 22 * * 1-5"
 
-  # GitHub에서 수동 실행도 가능
   workflow_dispatch:
 
-
 permissions:
-
   contents: write
 
-
 jobs:
-
   update-stock:
 
     runs-on: ubuntu-latest
 
-
     steps:
-
-      # ==========================================
-      # 1. GitHub Repository 가져오기
-      # ==========================================
 
       - name: Checkout repository
         uses: actions/checkout@v4
 
-
-      # ==========================================
-      # 2. Python 설치
-      # ==========================================
-
       - name: Setup Python
         uses: actions/setup-python@v5
-
         with:
           python-version: "3.11"
 
-
-      # ==========================================
-      # 3. Python 패키지 설치
-      # ==========================================
-
       - name: Install dependencies
         run: |
-
           python -m pip install --upgrade pip
-
-          pip install \
-            numpy \
-            pandas \
-            yfinance \
-            scikit-learn \
-            joblib \
-            tensorflow
-
-
-      # ==========================================
-      # 4. 주가 데이터 업데이트
-      # ==========================================
+          pip install numpy pandas yfinance scikit-learn joblib tensorflow
 
       - name: Run ATCH AI prediction
         run: |
-
           python update_stock.py
-
-
-      # ==========================================
-      # 5. 변경사항 확인
-      # ==========================================
 
       - name: Check changes
         run: |
-
           git status
-
-
-      # ==========================================
-      # 6. GitHub에 자동 저장
-      # ==========================================
 
       - name: Commit and push
         run: |
-
           git config user.name "github-actions[bot]"
-
-          git config user.email \
-            "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add data/
 
