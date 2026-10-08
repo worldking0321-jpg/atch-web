@@ -1,0 +1,14 @@
+{
+  "ticker": "ATCH",
+  "model": "GRU",
+  "lookback": 60,
+  "scaler": "StandardScaler",
+  "target": "next_trading_day_return",
+  "feature_count": 68,
+  "training_start": "2021-12-21",
+  "training_end": "2025-09-12",
+  "validation_start": "2025-09-15",
+  "validation_end": "2026-03-25",
+  "test_start": "2026-03-26",
+  "test_end": "2026-10-06"
+}
