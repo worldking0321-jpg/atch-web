@@ -1,16 +1,16 @@
 {
   "ticker": "ATCH",
   "company": "Atlas Clear Holdings",
-  "reference_date": "2026-11-03",
-  "date": "2026-11-03",
-  "current_price": 0.1379,
-  "predicted_return": -0.01035369,
-  "predicted_price": 0.136472,
+  "reference_date": "2026-11-04",
+  "date": "2026-11-04",
+  "current_price": 0.1403,
+  "predicted_return": -0.01102619,
+  "predicted_price": 0.138753,
   "direction": "하락 예상",
-  "prediction_strength": 20.71,
+  "prediction_strength": 22.05,
   "model": "GRU",
   "lookback": 60,
   "feature_count": 68,
   "scaler": "StandardScaler",
-  "updated_at": "2026-11-03T23:09:33.836172+00:00"
+  "updated_at": "2026-11-04T23:08:47.650751+00:00"
 }
